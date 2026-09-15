@@ -13,7 +13,7 @@ export function LandingHero() {
         <p className="mt-7 max-w-130 font-body text-[1.05rem] leading-[1.58] text-cocoa-soft lg:text-[1.2rem]">
           Tiebreak is a simple way to make decisions together. Create a poll, share it with your crew, and watch the votes come in. No accounts for voters, no endless back-and-forth.
         </p>
-        <p className="mt-7 font-body text-sm font-bold text-cocoa-soft">Account access coming soon</p>
+        <p className="mt-7 font-body text-sm font-bold text-cocoa-soft">Create an account to start a poll for your crew.</p>
       </div>
       <LandingPollPreview />
     </section>

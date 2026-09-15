@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+* {
+  scrollbar-gutter: stable;
+}
+
 :root {
   --background: var(--color-cream);
   --foreground: var(--color-cocoa);
