@@ -1,6 +1,7 @@
 -- Tiebreak initial schema. Apply with Supabase migrations or the SQL editor.
 -- Shared UUID links are access-by-link; do not expose a public poll-list endpoint.
 
+create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
 
 create type public.poll_status as enum ('open', 'settled');
@@ -40,6 +41,8 @@ create table public.options (
      suggester_avatar_tint is null)
     or
     (source = 'suggestion' and suggestion_status is not null and
+     suggester_name is not null and suggester_avatar_seed is not null and
+     suggester_avatar_tint is not null and
      length(btrim(suggester_name)) between 1 and 80 and
      length(btrim(suggester_avatar_seed)) between 1 and 200 and
      suggester_avatar_tint in ('f8c9b9', 'cbe2d8', 'f6e0a4', 'e3d2f2'))
@@ -76,6 +79,82 @@ create table public.votes (
 );
 
 create index votes_poll_option_idx on public.votes (poll_id, option_id);
+
+create or replace function public.create_poll(
+  p_title text,
+  p_option_labels text[],
+  p_max_choices smallint,
+  p_suggestions_enabled boolean,
+  p_closes_at timestamptz
+) returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_poll_id uuid;
+  v_count integer;
+begin
+  v_count := coalesce(array_length(p_option_labels, 1), 0);
+  if auth.uid() is null then raise exception 'Sign in to create a poll'; end if;
+  if p_closes_at is null or p_closes_at <= now() then
+    raise exception 'A future closing time is required';
+  end if;
+  if v_count < 2 or v_count > 10 or p_max_choices is null or
+     p_max_choices < 1 or p_max_choices > v_count or
+     exists (select 1 from unnest(p_option_labels) as x(label)
+               where x.label is null or length(btrim(x.label)) not between 1 and 200) then
+    raise exception 'Provide 2 to 10 options and a valid choice limit';
+  end if;
+
+  insert into public.polls
+    (creator_id, title, max_choices, suggestions_enabled, closes_at)
+  values (auth.uid(), p_title, p_max_choices,
+          coalesce(p_suggestions_enabled, false), p_closes_at)
+  returning id into v_poll_id;
+
+  insert into public.options (poll_id, label, display_order, source)
+  select v_poll_id, label, ordinal - 1, 'creator'::public.option_source
+    from unnest(p_option_labels) with ordinality as x(label, ordinal);
+  return v_poll_id;
+end;
+$$;
+
+create or replace function public.suggest_option(
+  p_poll_id uuid,
+  p_label text,
+  p_suggester_name text,
+  p_avatar_seed text,
+  p_avatar_tint text
+) returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_poll public.polls%rowtype;
+  v_option_id uuid;
+begin
+  select * into v_poll from public.polls where id = p_poll_id for update;
+  if not found or v_poll.status <> 'open' or v_poll.closes_at <= now() or
+     not v_poll.suggestions_enabled then
+    raise exception 'Suggestions are closed';
+  end if;
+  insert into public.options
+    (poll_id, label, display_order, source, suggestion_status,
+     suggester_name, suggester_avatar_seed, suggester_avatar_tint)
+  values
+    (p_poll_id, p_label,
+     (select coalesce(max(display_order), -1) + 1 from public.options
+       where poll_id = p_poll_id),
+     'suggestion', 'pending', p_suggester_name, p_avatar_seed, p_avatar_tint)
+  returning id into v_option_id;
+  return v_option_id;
+end;
+$$;
+
+revoke execute on function public.create_poll(text, text[], smallint, boolean, timestamptz)
+  from public;
+revoke execute on function public.suggest_option(uuid, text, text, text, text)
+  from public;
+grant execute on function public.create_poll(text, text[], smallint, boolean, timestamptz)
+  to authenticated;
+grant execute on function public.suggest_option(uuid, text, text, text, text)
+  to anon, authenticated;
 
 -- A ballot is inserted atomically with all its votes. Existing tokens are
 -- idempotent only when the submitted choice set matches the original.
