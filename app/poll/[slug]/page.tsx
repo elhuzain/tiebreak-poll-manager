@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicPollScreen } from "@/components/containers/public-poll-screen";
+import { LandingHeader } from "@/components/containers/landing-header";
 import { getPublicPoll } from "@/lib/data/public-polls";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -14,5 +15,5 @@ export default async function PublicPollPage({ params }: { params: Promise<{ slu
   if (!/^[0-9a-f]{32}$/.test(slug)) notFound();
   const poll = await getPublicPoll(slug);
   if (!poll) notFound();
-  return <PublicPollScreen poll={poll} />;
+  return <div className="min-h-screen bg-cream text-cocoa"><LandingHeader /><PublicPollScreen poll={poll} /></div>;
 }

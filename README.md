@@ -29,8 +29,16 @@ The callback verifies the token, stores the session in cookies, and redirects to
 
 ## Poll creation
 
-The dashboard has a **Create poll** button. The form saves a question, 2–10 options, a closing time, a choice limit, and the suggestions setting through the backend admin client. After creation, the poll appears in **My polls**. The voter flow is still to be built.
+The dashboard has a **Create poll** button. The form saves a question, 2–10 options, a closing time, a choice limit, and the suggestions setting through the backend admin client. After creation, the poll appears in **My polls**.
 
 Apply the initial schema in `lib/supabase/migrations/20260915000000_initial_schema.sql` to a fresh project. The backend verifies the creator using the cookie-scoped auth client, writes the poll and its options with the admin client, and removes the poll if option insertion fails.
 
-Apply `lib/supabase/migrations/20260915000001_poll_slugs.sql` after the initial schema. It backfills existing polls, requires a slug for every poll, and enforces uniqueness. New slugs are random and the backend retries if a collision reaches the unique constraint. Poll cards copy a URL at `/poll/<slug>`; the public voter page for that URL is part of the upcoming voter flow. The unguessable slug is the access-by-link identifier, so never expose a public poll-list endpoint.
+Apply `lib/supabase/migrations/20260915000001_poll_slugs.sql` after the initial schema. It backfills existing polls, requires a slug for every poll, and enforces uniqueness. New slugs are random and the backend retries if a collision reaches the unique constraint. Poll cards copy a URL at `/poll/<slug>`. The unguessable slug is the access-by-link identifier, so never expose a public poll-list endpoint.
+
+## Voter and creator poll views
+
+The public `/poll/<slug>` page lets a voter pick a name, one of four DiceBear Micah avatars, and one or more options up to the poll's limit. Voting has a confirmation step because ballots are final. If suggestions are enabled, a voter can send an option for creator approval; pending suggestions never appear on the public ballot. After a vote, live totals appear and update every five seconds. Open-poll results expose counts but not who chose each option.
+
+A random token is stored per poll in browser session storage. The server stores only its SHA-256 hash and the `(poll_id, voter_token_hash)` unique key prevents the same token casting twice. A pending token is saved before submission so a network retry uses the same identity; it becomes a voted token only after the server confirms the ballot. This is casual prevention: another browser or a new session can vote again.
+
+The creator opens a poll from My polls to see the race, recent voter avatars, pending suggestions, and the share link. Open polls refresh every five seconds. Declining a suggestion keeps an Undo path. Ending voting settles the poll; reopening requires confirmation and a new future deadline, while prior votes stay final. When a closing time passes, the creator view settles the poll on read; public views treat it as closed immediately.

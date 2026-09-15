@@ -8,7 +8,7 @@ export async function selectPollBySlug(slug: string) {
 
 export async function selectPollOptions(pollId: string) {
   return createAdminClient().from("options")
-    .select("id, label, display_order, source, suggestion_status, suggester_name")
+    .select("id, label, display_order, source, suggestion_status, suggester_name, suggester_avatar_seed, suggester_avatar_tint")
     .eq("poll_id", pollId).order("display_order");
 }
 

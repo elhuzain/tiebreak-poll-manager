@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PollResults } from "@/lib/data/public-polls";
-import { VoterResultsList } from "@/components/list/voter-results-list";
+import { PollResultsView } from "@/components/containers/poll-results-view";
 
 export function VoterResultsPanel({ slug, mine }: { slug: string; mine: string[] }) {
   const [results, setResults] = useState<PollResults | null>(null);
@@ -39,7 +39,7 @@ export function VoterResultsPanel({ slug, mine }: { slug: string; mine: string[]
     <h2 id="results-title" className="font-display text-xl font-extrabold">{results?.status === "settled" ? "Final results" : "Live results"}</h2>
     <p className="mt-1 font-body text-sm text-cocoa-soft">Counts update as votes arrive.</p>
     <p className="sr-only" aria-live="polite">{announcement}</p>
-    {results ? <div className="mt-5"><VoterResultsList results={results} mine={mine} /></div> : <p className="mt-5 rounded-md border-2 border-cocoa bg-card p-5 font-body">Loading results…</p>}
+    {results ? <PollResultsView results={results} mine={mine} /> : <p className="mt-5 rounded-md border-2 border-cocoa bg-card p-5 font-body">Loading results…</p>}
     {error && <p role="status" className="mt-3 font-body text-sm text-cocoa-soft">Results couldn’t update just now. Trying again.</p>}
   </section>;
 }

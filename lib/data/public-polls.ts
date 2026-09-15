@@ -5,7 +5,7 @@ import {
   selectPollBySlug, selectPollOptions, selectPollVotes,
 } from "@/lib/supabase/api/public-polls";
 
-export type PublicOption = { id: string; label: string; suggestedBy: string | null };
+export type PublicOption = { id: string; label: string; suggestedBy: string | null, suggestedByAvatar: string | null, suggestedByTint: string | null };
 export type PublicPoll = {
   slug: string;
   title: string;
@@ -37,7 +37,7 @@ async function loadPoll(slug: string) {
 
 function visibleOptions(options: Awaited<ReturnType<typeof selectPollOptions>>["data"]): PublicOption[] {
   return (options ?? []).filter((option) => option.source === "creator" || option.suggestion_status === "approved")
-    .map((option) => ({ id: option.id, label: option.label, suggestedBy: option.source === "suggestion" ? option.suggester_name : null }));
+    .map((option) => ({ id: option.id, label: option.label, suggestedByAvatar: option.source === "suggestion" ? option.suggester_avatar_seed : null, suggestedByTint: option.source === "suggestion" ? option.suggester_avatar_tint : null, suggestedBy: option.source === "suggestion" ? option.suggester_name : null }));
 }
 
 export async function getPublicPoll(slug: string): Promise<PublicPoll | null> {
@@ -87,6 +87,7 @@ export async function getSavedBallot(slug: string, token: string): Promise<Saved
   if (!ballot) return null;
   const { data: votes, error: votesError } = await selectBallotChoices(ballot.id);
   if (votesError) throw new Error(`Unable to check choices: ${votesError.message}`);
+  if (!votes?.length) return null;
   return { name: ballot.voter_name, optionIds: (votes ?? []).map((vote) => vote.option_id) };
 }
 
@@ -101,6 +102,7 @@ export async function castPublicVote(input: {
   if (existing) {
     const { data, error } = await selectBallotChoices(existing.id);
     if (error) return { status: "error", message: "We couldn’t load your vote. Try again." };
+    if (!data?.length) return { status: "error", message: "Your vote is still processing. Try again in a moment." };
     return { status: "already", optionIds: (data ?? []).map((vote) => vote.option_id) };
   }
   if (effectiveStatus(poll) !== "open") return { status: "error", message: "Voting has closed." };

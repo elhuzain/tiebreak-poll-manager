@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { avatarChoices } from "@/lib/avatars";
 import { castVoteAction, suggestOptionAction } from "@/lib/actions/public-polls";
@@ -8,6 +7,7 @@ import type { PublicPoll, SavedBallot } from "@/lib/data/public-polls";
 import { VoterAvatarList } from "@/components/list/voter-avatar-list";
 import { VoterBallotList } from "@/components/list/voter-ballot-list";
 import { VoterResultsPanel } from "@/components/containers/voter-results-panel";
+import { PollStatusPills } from "@/components/poll-status-pills";
 
 type View = "checking" | "ballot" | "voted" | "closed" | "check-error";
 
@@ -146,12 +146,11 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
     } finally { setBusy(false); }
   }
 
-  return <div className="min-h-screen bg-cream font-body text-cocoa">
-    <header className="border-b-2 border-cocoa bg-card px-5 py-4"><div className="mx-auto max-w-content"><Link href="/" className="font-display text-xl font-black focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal">Tiebreak</Link></div></header>
+  return <div className="font-body">
     <main className="mx-auto w-full max-w-content px-5 py-8 pb-16 sm:px-8 md:py-12">
       <p className="font-body text-xs font-extrabold tracking-[0.1em] text-teal-deep">GROUP POLL</p>
-      <h1 className="mt-3 font-display text-2xl font-black leading-tight tracking-tight md:text-3xl">{poll.title}</h1>
-      <p className="mt-4 font-body text-sm text-cocoa-soft">{view === "closed" || closed ? "Voting closed" : "Voting open"} · Closes <time dateTime={poll.closesAt}>{new Date(poll.closesAt).toLocaleString()}</time></p>
+      <PollStatusPills status={poll.status} closesAt={poll.closesAt} viewClosed={view === "closed"} />
+      <h1 className="mt-5 font-display text-2xl font-black leading-tight tracking-tight md:text-3xl">{poll.title}</h1>
 
       {view === "checking" && <p className="mt-8 rounded-lg border-2 border-cocoa bg-card p-6">Checking your vote…</p>}
       {view === "check-error" && <div className="mt-8 rounded-lg border-2 border-cocoa bg-card p-6"><p role="alert">We couldn’t check your previous vote.</p><button type="button" onClick={() => window.location.reload()} className="mt-4 underline">Try again</button></div>}
@@ -173,7 +172,7 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
         {poll.suggestionsEnabled && <button ref={suggestTrigger} type="button" onClick={openSuggestion} className="mt-5 min-h-11 w-full rounded-full border-2 border-cocoa bg-card px-5 font-display text-sm font-extrabold focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal">Suggest something else</button>}
       </>}
 
-      {view === "voted" && <><div role="status" className="mt-8 rounded-lg border-[2.5px] border-teal-deep bg-teal-soft p-6"><h2 className="font-display text-xl font-extrabold">{returning ? "You already voted" : "Your vote counted!"}</h2><p className="mt-2 font-body text-base">{returning ? "Votes are final, so there’s no second ballot for this browser." : "Thanks for helping the group decide."}</p>{mine.length > 0 && <p className="mt-2 font-body text-sm font-bold">You backed {poll.options.filter((option) => mine.includes(option.id)).map((option) => option.label).join(" and ")}.</p>}</div><VoterResultsPanel slug={poll.slug} mine={mine} /></>}
+      {view === "voted" && <><div role="status" className="mt-8 rounded-lg border-[2.5px] border-teal-deep bg-teal-soft p-6"><h2 className="font-display text-xl font-extrabold">{returning ? "You already voted" : "Your vote counted!"}</h2><p className="mt-2 font-body text-base">{returning ? "Votes are final. You cannot vote again." : "Thanks for helping the group decide."}</p>{mine.length > 0 && <p className="mt-2 font-body text-sm font-bold">You backed {poll.options.filter((option) => mine.includes(option.id)).map((option) => option.label).join(" and ")}.</p>}</div><VoterResultsPanel slug={poll.slug} mine={mine} /></>}
       {view === "closed" && <><div role="status" className="mt-8 rounded-lg border-[2.5px] border-cocoa bg-card p-6"><h2 className="font-display text-xl font-extrabold">Voting has closed</h2><p className="mt-2 font-body text-base">The group has made its picks. Here’s how it ended.</p></div><VoterResultsPanel slug={poll.slug} mine={[]} /></>}
     </main>
 
