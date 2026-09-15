@@ -23,7 +23,8 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mine, setMine] = useState<string[]>([]);
   const [returning, setReturning] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<"vote" | "suggestion" | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [suggestion, setSuggestion] = useState("");
@@ -104,8 +105,8 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
   }
 
   async function castVote() {
-    if (!choice || busy) return;
-    setBusy(true);
+    if (!choice || busyAction) return;
+    setBusyAction("vote");
     setError("");
     const token = pendingToken.current ?? randomToken();
     pendingToken.current = token;
@@ -121,7 +122,7 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
     } catch {
       setError("That didn’t send. Try again.");
       confirmDialog.current?.close();
-    } finally { setBusy(false); }
+    } finally { setBusyAction(null); }
   }
 
   function openSuggestion() {
@@ -132,8 +133,8 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
   }
 
   async function submitSuggestion() {
-    if (!choice || !suggestion.trim() || busy) return;
-    setBusy(true);
+    if (!choice || !suggestion.trim() || busyAction) return;
+    setBusyAction("suggestion");
     try {
       const result = await suggestOptionAction({ slug: poll.slug, label: suggestion, name, avatarSeed: choice.seed, avatarTint: choice.tint });
       if (result.error) { setError(result.error); suggestionDialog.current?.close(); return; }
@@ -143,7 +144,7 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
     } catch {
       setError("That suggestion didn’t send. Try again.");
       suggestionDialog.current?.close();
-    } finally { setBusy(false); }
+    } finally { setBusyAction(null); }
   }
 
   return <div className="font-body">
@@ -153,7 +154,7 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
       <h1 className="mt-5 font-display text-2xl font-black leading-tight tracking-tight md:text-3xl">{poll.title}</h1>
 
       {view === "checking" && <p className="mt-8 rounded-lg border-2 border-cocoa bg-card p-6">Checking your vote…</p>}
-      {view === "check-error" && <div className="mt-8 rounded-lg border-2 border-cocoa bg-card p-6"><p role="alert">We couldn’t check your previous vote.</p><button type="button" onClick={() => window.location.reload()} className="mt-4 underline">Try again</button></div>}
+      {view === "check-error" && <div className="mt-8 rounded-lg border-2 border-cocoa bg-card p-6"><p role="alert">We couldn’t check your previous vote.</p><button type="button" disabled={retrying} aria-busy={retrying} onClick={() => { setRetrying(true); window.location.reload(); }} className="mt-4 underline disabled:cursor-wait disabled:opacity-70">{retrying ? "Retrying…" : "Try again"}</button></div>}
       {view === "ballot" && <>
         <section className="mt-8 rounded-lg border-[2.5px] border-cocoa bg-card p-5 sm:p-7" aria-labelledby="identity-title">
           <h2 id="identity-title" className="font-display text-lg font-extrabold">First, who’s voting?</h2>
@@ -168,8 +169,8 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
         </section>
         {error && <p id="vote-error" role="alert" className="mt-5 rounded-md border-2 border-cocoa bg-cream-deep p-4 font-body text-sm font-bold">{error}</p>}
         {message && <p role="status" className="mt-5 rounded-md border-2 border-teal-deep bg-teal-soft p-4 font-body text-sm font-bold text-teal-deep">{message}</p>}
-        <button ref={castTrigger} type="button" disabled={!ready || busy} onClick={openConfirmation} className="mt-7 min-h-14 w-full rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-5 py-3 font-display text-base font-extrabold text-cream-bright shadow-press-tangerine focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-not-allowed disabled:opacity-50">{selectedIds.length === 1 ? `Cast my vote for ${selectedLabels[0]}` : selectedIds.length > 1 ? `Cast my vote for ${selectedIds.length} choices` : "Cast my vote"}</button>
-        {poll.suggestionsEnabled && <button ref={suggestTrigger} type="button" onClick={openSuggestion} className="mt-5 min-h-11 w-full rounded-full border-2 border-cocoa bg-card px-5 font-display text-sm font-extrabold focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal">Suggest something else</button>}
+        <button ref={castTrigger} type="button" disabled={!ready || !!busyAction} onClick={openConfirmation} className="mt-7 min-h-14 w-full rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-5 py-3 font-display text-base font-extrabold text-cream-bright shadow-press-tangerine focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-not-allowed disabled:opacity-50">{selectedIds.length === 1 ? `Cast my vote for ${selectedLabels[0]}` : selectedIds.length > 1 ? `Cast my vote for ${selectedIds.length} choices` : "Cast my vote"}</button>
+        {poll.suggestionsEnabled && <button ref={suggestTrigger} type="button" disabled={!!busyAction} onClick={openSuggestion} className="mt-5 min-h-11 w-full rounded-full border-2 border-cocoa bg-card px-5 font-display text-sm font-extrabold focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-wait disabled:opacity-70">Suggest something else</button>}
       </>}
 
       {view === "voted" && <><div role="status" className="mt-8 rounded-lg border-[2.5px] border-teal-deep bg-teal-soft p-6"><h2 className="font-display text-xl font-extrabold">{returning ? "You already voted" : "Your vote counted!"}</h2><p className="mt-2 font-body text-base">{returning ? "Votes are final. You cannot vote again." : "Thanks for helping the group decide."}</p>{mine.length > 0 && <p className="mt-2 font-body text-sm font-bold">You backed {poll.options.filter((option) => mine.includes(option.id)).map((option) => option.label).join(" and ")}.</p>}</div><VoterResultsPanel slug={poll.slug} mine={mine} /></>}
@@ -179,14 +180,14 @@ export function PublicPollScreen({ poll }: { poll: PublicPoll }) {
     <dialog ref={confirmDialog} onClose={() => castTrigger.current?.focus()} aria-labelledby="confirm-title" className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border-[2.5px] border-cocoa bg-card p-6 text-cocoa backdrop:bg-cocoa/60">
       <h2 id="confirm-title" className="font-display text-xl font-extrabold">Cast this vote?</h2>
       <p className="mt-3 font-body text-base">You’re choosing {selectedLabels.join(" and ")}. Votes are final.</p>
-      <div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={busy} onClick={() => confirmDialog.current?.close()} className="min-h-11 rounded-full border-2 border-cocoa px-5 font-display font-extrabold">Keep choosing</button><button type="button" disabled={busy} onClick={() => void castVote()} className="min-h-11 rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-5 font-display font-extrabold text-cream-bright">Confirm vote</button></div>
+      <div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={!!busyAction} onClick={() => confirmDialog.current?.close()} className="min-h-11 rounded-full border-2 border-cocoa px-5 font-display font-extrabold">Keep choosing</button><button type="button" disabled={!!busyAction} aria-busy={busyAction === "vote"} onClick={() => void castVote()} className="min-h-11 rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-5 font-display font-extrabold text-cream-bright disabled:cursor-wait disabled:opacity-70">{busyAction === "vote" ? "Casting vote…" : "Confirm vote"}</button></div>
     </dialog>
     <dialog ref={suggestionDialog} onClose={() => suggestTrigger.current?.focus()} aria-labelledby="suggest-title" className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border-[2.5px] border-cocoa bg-card p-6 text-cocoa backdrop:bg-cocoa/60">
       <h2 id="suggest-title" className="font-display text-xl font-extrabold">Suggest something else</h2>
       <p className="mt-2 font-body text-sm text-cocoa-soft">The creator decides whether to add it to the ballot.</p>
       <label htmlFor="suggestion-label" className="mt-5 block font-body text-sm font-extrabold">Your suggestion</label>
       <input id="suggestion-label" value={suggestion} onChange={(event) => setSuggestion(event.target.value)} maxLength={200} className="mt-2 min-h-12 w-full rounded-md border-2 border-cocoa bg-cream px-4 font-body text-base focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal" />
-      <div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={busy} onClick={() => suggestionDialog.current?.close()} className="min-h-11 rounded-full border-2 border-cocoa px-5 font-display font-extrabold">Cancel</button><button type="button" disabled={!suggestion.trim() || busy} onClick={() => void submitSuggestion()} className="min-h-11 rounded-full border-2 border-teal-deep bg-teal-deep px-5 font-display font-extrabold text-cream-bright disabled:opacity-50">Send suggestion</button></div>
+      <div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={!!busyAction} onClick={() => suggestionDialog.current?.close()} className="min-h-11 rounded-full border-2 border-cocoa px-5 font-display font-extrabold">Cancel</button><button type="button" disabled={!suggestion.trim() || !!busyAction} aria-busy={busyAction === "suggestion"} onClick={() => void submitSuggestion()} className="min-h-11 rounded-full border-2 border-teal-deep bg-teal-deep px-5 font-display font-extrabold text-cream-bright disabled:cursor-wait disabled:opacity-50">{busyAction === "suggestion" ? "Sending…" : "Send suggestion"}</button></div>
     </dialog>
   </div>;
 }

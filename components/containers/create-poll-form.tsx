@@ -58,7 +58,7 @@ export function CreatePollForm() {
       </label>
 
       {state.error && <p role="alert" className="rounded-md border-2 border-cocoa bg-cream-deep p-3 font-body text-sm font-bold">{state.error}</p>}
-      <button type="submit" disabled={pending} className="min-h-12 rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-6 font-display text-base font-extrabold text-cream-bright shadow-press-tangerine focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:opacity-70">{pending ? "Creating…" : "Create poll"}</button>
+      <button type="submit" disabled={pending} aria-busy={pending} className="min-h-12 rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-6 font-display text-base font-extrabold text-cream-bright shadow-press-tangerine focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-wait disabled:opacity-70">{pending ? "Creating…" : "Create poll"}</button>
     </form>
   );
 }

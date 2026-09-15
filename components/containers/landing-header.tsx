@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/auth";
 import { getCreator } from "@/lib/data/auth";
+import { LogoutButton } from "@/components/logout-button";
 
 export async function LandingHeader() {
   const creator = await getCreator();
@@ -19,7 +20,7 @@ export async function LandingHeader() {
             <>
               <Link className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-teal-deep bg-teal px-3 font-display text-sm font-extrabold text-cream focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal sm:px-5 sm:text-base" href="/dashboard">My polls</Link>
               <form action={logoutAction}>
-                <button className="min-h-11 rounded-full border-2 border-cocoa px-3 font-display text-sm font-extrabold focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal sm:px-5 sm:text-base" type="submit">Log out</button>
+                <LogoutButton />
               </form>
             </>
           ) : (

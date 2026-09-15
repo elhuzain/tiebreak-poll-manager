@@ -43,6 +43,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         className="mt-2 min-h-12 rounded-full border-2 border-tangerine-deep bg-tangerine-deep px-5 font-display text-base font-extrabold text-cream-bright shadow-press-tangerine focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-wait disabled:opacity-70"
         type="submit"
         disabled={pending}
+        aria-busy={pending}
       >
         {pending ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
       </button>

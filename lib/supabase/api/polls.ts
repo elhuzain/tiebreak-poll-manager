@@ -9,6 +9,16 @@ export async function selectCreatorPolls(creatorId: string) {
     .order("created_at", { ascending: false });
 }
 
+export async function selectPendingSuggestions(pollIds: string[], start: number) {
+  return createAdminClient().from("options")
+    .select("poll_id")
+    .in("poll_id", pollIds)
+    .eq("source", "suggestion")
+    .eq("suggestion_status", "pending")
+    .order("id")
+    .range(start, start + 999);
+}
+
 export async function selectCreatorPoll(creatorId: string, slug: string) {
   return createAdminClient().from("polls")
     .select("id, slug, title, closes_at, status, suggestions_enabled, max_choices")
