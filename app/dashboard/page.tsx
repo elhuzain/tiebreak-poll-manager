@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/containers/admin-dashboard";
 import { getCreator } from "@/lib/data/auth";
+import { getMyPolls } from "@/lib/data/polls";
 
 export const metadata: Metadata = {
   title: "My polls — Tiebreak",
@@ -11,5 +12,6 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const creator = await getCreator();
   if (!creator) redirect("/login");
-  return <AdminDashboard email={creator.email} />;
+  const polls = await getMyPolls(creator.id);
+  return <AdminDashboard email={creator.email} polls={polls} />;
 }

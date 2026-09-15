@@ -13,7 +13,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 
 Run `npm run dev` and open `http://localhost:3000`.
 
-The creator auth flow uses Supabase Auth with email and password. User sessions live in cookies via `@supabase/ssr`; the Next.js Proxy refreshes them, and the dashboard checks the authenticated user on the server. The publishable key is used for user-scoped requests. Keep `SUPABASE_SECRET_KEY` server-only for future privileged operations; it is not used for login or signup.
+The creator auth flow uses Supabase Auth with email and password. User sessions live in cookies via `@supabase/ssr`; the Next.js Proxy refreshes them, and the dashboard checks the authenticated user on the server. The publishable key is used for session-scoped auth requests. Backend poll data access uses the server-only `SUPABASE_SECRET_KEY` after verifying the creator; it is never used for login or signup.
 
 ## Email confirmation setup
 
@@ -27,4 +27,10 @@ In **Authentication → Email Templates → Confirm signup**, make the confirmat
 
 The callback verifies the token, stores the session in cookies, and redirects to `/dashboard`. If email confirmation is disabled, signup receives a session immediately and redirects there directly. [Supabase's SSR email-confirmation guide](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs) explains the token-hash requirement.
 
-The dashboard currently has an empty state. Poll creation and the voter flow will be added in later work.
+## Poll creation
+
+The dashboard has a **Create poll** button. The form saves a question, 2–10 options, a closing time, a choice limit, and the suggestions setting through the backend admin client. After creation, the poll appears in **My polls**. The voter flow is still to be built.
+
+Apply the initial schema in `lib/supabase/migrations/20260915000000_initial_schema.sql` to a fresh project. The backend verifies the creator using the cookie-scoped auth client, writes the poll and its options with the admin client, and removes the poll if option insertion fails.
+
+Apply `lib/supabase/migrations/20260915000001_poll_slugs.sql` after the initial schema. It backfills existing polls, requires a slug for every poll, and enforces uniqueness. New slugs are random and the backend retries if a collision reaches the unique constraint. Poll cards copy a URL at `/poll/<slug>`; the public voter page for that URL is part of the upcoming voter flow. The unguessable slug is the access-by-link identifier, so never expose a public poll-list endpoint.

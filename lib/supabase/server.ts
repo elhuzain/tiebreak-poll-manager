@@ -1,6 +1,6 @@
-import { createClient as adminClientCreator } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-export function createClient() {
+export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const secretKey = process.env.SUPABASE_SECRET_KEY
 
@@ -8,7 +8,7 @@ export function createClient() {
     throw new Error('Missing Supabase admin environment variables')
   }
 
-  return adminClientCreator(url, secretKey, {
+  return createSupabaseClient(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
