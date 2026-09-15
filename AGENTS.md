@@ -81,6 +81,14 @@ Low-level UI primitives such as `Button`, `Input`, `Badge`, `Avatar`, `Modal`, a
 
 Not every feature requires all three layers. Do not create components solely to satisfy the classification.
 
+Put feature components in separate files using this structure:
+
+* `components/list/*` for List components
+* `components/*` for single parts such as `ProjectCard` and other Item components
+* `components/containers/*` for Container components
+
+Keep shared feature content outside UI component files. Low-level UI primitives may stay in `components/ui/*`.
+
 ## Container Components
 
 Containers compose and coordinate other components.
