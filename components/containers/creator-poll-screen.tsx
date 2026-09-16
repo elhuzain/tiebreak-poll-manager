@@ -20,7 +20,7 @@ export function CreatorPollScreen({ poll }: { poll: CreatorPollDetail }) {
     <main className="mx-auto w-full max-w-content flex-1 px-5 py-10 sm:px-8 md:py-14">
       <Link href="/dashboard" className="font-body text-sm font-extrabold underline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-teal">← My polls</Link>
       <PollStatusPills status={poll.status} closesAt={poll.closesAt} className="mt-7" />
-      <h1 className="mt-5 font-display text-2xl font-black leading-tight tracking-tight md:text-3xl">{poll.title}</h1>
+      <h1 className="mt-5 font-display text-3xl font-black leading-tight tracking-tight md:text-6xl">{poll.title}</h1>
       <div className="mt-5 flex flex-wrap items-center gap-3"><CrewAvatarStack crew={poll.crew} /><p className="font-body text-sm font-bold tabular-nums">{ballots} of your crew voted · {lastVote}</p></div>
 
       <PollResultsView results={poll.results} />
