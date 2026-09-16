@@ -8,6 +8,10 @@
   --font-karla: "Karla", system-ui, -apple-system, sans-serif;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
