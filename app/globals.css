@@ -4,8 +4,6 @@
 :root {
   --background: var(--color-cream);
   --foreground: var(--color-cocoa);
-  --font-gabarito: "Gabarito", system-ui, -apple-system, sans-serif;
-  --font-karla: "Karla", system-ui, -apple-system, sans-serif;
 }
 
 html {
