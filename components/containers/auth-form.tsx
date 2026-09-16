@@ -18,7 +18,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          value="demo@example.com"
+          defaultValue={mode === "login" ? "demo@example.com" : undefined}
           required
         />
       </div>
@@ -29,7 +29,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           id="password"
           name="password"
           type="password"
-          value="Demo!123#"
+          defaultValue={mode === "login" ? "Demo!123#" : undefined}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           minLength={mode === "signup" ? 8 : undefined}
           required
