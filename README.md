@@ -2,6 +2,20 @@
 
 Tiebreak helps a group make a decision in its chat. A creator makes a poll and shares one link; friends vote without accounts, can suggest choices, and see the result when voting closes.
 
+**Challenge:** [Frontend Mentor Product Challenge: Poll Creator App](https://www.frontendmentor.io/challenges/poll-creator-app)
+
+**Live site:** [tiebreak.elhuzain.com](https://tiebreak.elhuzain.com)
+
+![Tiebreak landing page](./public/screenshot.png)
+
+## Built with
+
+- Next.js 16 and React 19
+- TypeScript
+- Supabase Auth, Postgres, and `@supabase/ssr`
+- Tailwind CSS 4 and CSS custom properties
+- DiceBear Micah avatars
+
 ## Local setup
 
 Run `npm install`, then set these values in `.env.local` from your Supabase project's Connect panel:
@@ -42,3 +56,22 @@ The public `/poll/<slug>` page lets a voter pick a name, one of four DiceBear Mi
 A random token is stored per poll in browser session storage. The server stores only its SHA-256 hash and the `(poll_id, voter_token_hash)` unique key prevents the same token casting twice. A pending token is saved before submission so a network retry uses the same identity; it becomes a voted token only after the server confirms the ballot. This is casual prevention: another browser or a new session can vote again.
 
 The creator opens a poll from My polls to see the race, recent voter avatars, pending suggestions, and the share link. Open polls refresh every five seconds. Declining a suggestion keeps an Undo path. Ending voting settles the poll; reopening requires confirmation and a new future deadline, while prior votes stay final. When a closing time passes, the creator view settles the poll on read; public views treat it as closed immediately.
+
+## What I learned
+
+- With no Figma file, I treated the brand kit and product requirements as constraints, then designed the missing voter, first-run, and reveal states around the actual group-chat workflow. Keeping counts beside percentages and showing who backed each option after closing helped the results stay legible and honest.
+- Supabase SSR taught me to keep browser auth and privileged data access separate. The cookie-scoped client verifies the creator, while the server-only admin key performs poll writes; the Next.js Proxy refreshes the session so server-rendered dashboard requests see the current user.
+- Five-second polling was a straightforward way to keep creator and voter results fresh without adding realtime infrastructure. It also made the trade-off clear: updates are not instant, and periodic refreshes need cleanup and clear closed-poll behavior.
+
+## Continued development
+
+- Add focused tests for poll transitions, duplicate ballot submissions, and suggestion moderation so the server remains the source of truth for each state.
+- Revisit live updates if the product needs lower latency; Supabase Realtime could replace periodic refreshes, with polling retained as a fallback.
+- Do a full keyboard and screen-reader pass on the voter confirmation, moderation actions, and results updates, then address any gaps found.
+
+## Useful resources
+
+- [Next.js documentation](https://nextjs.org/docs)
+- [Supabase: Use Supabase with Next.js](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs)
+- [Supabase SSR package](https://supabase.com/docs/guides/auth/server-side/creating-a-client)
+- [DiceBear documentation](https://www.dicebear.com/how-to-use/http-api/)
